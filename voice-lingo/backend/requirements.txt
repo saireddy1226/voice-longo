@@ -11,9 +11,8 @@ postgrest==0.16.8
 storage3==0.7.0
 realtime==1.0.6
 
-# HTTP (COMPATIBLE FIX)
+# HTTP (FIXED)
 httpx==0.25.2
-httpcore==0.17.3
 
 # FastAPI core
 pydantic==2.6.4
