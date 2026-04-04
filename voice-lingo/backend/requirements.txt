@@ -4,16 +4,16 @@ uvicorn[standard]==0.24.0
 python-dotenv==1.0.0
 python-multipart==0.0.6
 
-# Supabase (fully compatible set)
+# Supabase
 supabase==2.4.0
 gotrue==2.5.0
 postgrest==0.16.8
 storage3==0.7.0
 realtime==1.0.6
 
-# HTTP (CRITICAL FIX)
-httpx==0.27.0
-httpcore==0.18.0
+# HTTP (COMPATIBLE FIX)
+httpx==0.25.2
+httpcore==0.17.3
 
 # FastAPI core
 pydantic==2.6.4
