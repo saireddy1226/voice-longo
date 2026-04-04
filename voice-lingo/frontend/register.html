@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - Voice-Lingo</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#1e2972,#2a3c98);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+}
+
+.container{
+width:350px;
+background:white;
+padding:30px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.3);
+text-align:center;
+color:black;
+}
+
+h2{
+color:#2a5298;
+margin-bottom:20px;
+}
+
+.form-group{
+margin-bottom:15px;
+text-align:left;
+}
+
+label{
+display:block;
+margin-bottom:8px;
+color:#333;
+font-weight:500;
+font-size:14px;
+}
+
+input, select{
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:6px;
+font-size:14px;
+}
+
+input:focus, select:focus{
+outline:none;
+border-color:#2a5298;
+background-color:#f9f9f9;
+}
+
+.userid-status{
+font-size:12px;
+margin-top:5px;
+}
+
+.btn-primary{
+width:100%;
+padding:10px;
+background:#2a5298;
+border:none;
+border-radius:6px;
+color:white;
+cursor:pointer;
+font-size:16px;
+font-weight:bold;
+margin-top:15px;
+}
+
+.btn-primary:hover{
+background:#1e3c72;
+}
+
+.btn-secondary{
+width:100%;
+padding:10px;
+background:#e0e0e0;
+border:none;
+border-radius:6px;
+color:#333;
+cursor:pointer;
+font-size:14px;
+margin-top:10px;
+}
+
+.btn-secondary:hover{
+background:#d0d0d0;
+}
+
+.message{
+padding:12px;
+border-radius:6px;
+margin-bottom:15px;
+display:none;
+font-size:14px;
+}
+
+.message.success{
+display:block;
+background-color:#d4edda;
+color:#155724;
+border:1px solid #c3e6cb;
+}
+
+.message.error{
+display:block;
+background-color:#f8d7da;
+color:#721c24;
+border:1px solid #f5c6cb;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Create Account</h2>
+
+<div id="messageDiv" class="message"></div>
+
+<div class="form-group">
+<label>User ID</label>
+<input type="text" id="regUserId" placeholder="Choose a unique ID" onkeyup="checkUserIdAvailability(this.value)">
+<div id="userid-status" class="userid-status"></div>
+</div>
+
+<div class="form-group">
+<label>Name</label>
+<input type="text" id="regName" placeholder="Enter your name">
+</div>
+
+<div class="form-group">
+<label>Email</label>
+<input type="email" id="regEmail" placeholder="Enter your email">
+</div>
+
+<div class="form-group">
+<label>Preferred Language</label>
+<select id="regLanguage">
+<option value="">Select a language</option>
+<option value="English">English</option>
+<option value="Hindi">Hindi</option>
+<option value="Telugu">Telugu</option>
+<option value="Tamil">Tamil</option>
+<option value="Spanish">Spanish</option>
+<option value="French">French</option>
+<option value="German">German</option>
+<option value="Chinese">Chinese</option>
+<option value="Japanese">Japanese</option>
+<option value="Portuguese">Portuguese</option>
+</select>
+</div>
+
+<button class="btn-primary" onclick="goToPassword()">Continue</button>
+
+<button class="btn-secondary" onclick="goToLogin()">
+Already have account? Login
+</button>
+
+</div>
+
+<!-- ✅ config.js FIRST, then auth.js -->
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+
+async function checkUserIdAvailability(id) {
+    if (!id || id.length < 3) {
+        document.getElementById("userid-status").textContent = "";
+        return;
+    }
+    const res = await fetch(`${CONFIG.SERVER_URL}/check-userid/${id}`);
+    const data = await res.json();
+    const statusDiv = document.getElementById("userid-status");
+    if (data.available) {
+        statusDiv.textContent = "✔ Available";
+        statusDiv.style.color = "green";
+    } else {
+        statusDiv.textContent = "❌ Already taken";
+        statusDiv.style.color = "red";
+    }
+}
+
+function goToPassword(){
+    const userId = document.getElementById('regUserId').value;
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const language = document.getElementById('regLanguage').value;
+
+    if(!userId || !name || !email || !language){
+        showMessage('Please fill in all fields', 'error');
+        return;
+    }
+
+    sessionStorage.setItem('regUserId', userId);
+    sessionStorage.setItem('regName', name);
+    sessionStorage.setItem('regEmail', email);
+    sessionStorage.setItem('regLanguage', language);
+
+    window.location.href = 'password.html';
+}
+
+function goToLogin(){
+    window.location.href = 'login.html';
+}
+
+function showMessage(msg, type){
+    const msgDiv = document.getElementById('messageDiv');
+    msgDiv.textContent = msg;
+    msgDiv.className = 'message ' + type;
+}
+
+</script>
+
+</body>
+</html>

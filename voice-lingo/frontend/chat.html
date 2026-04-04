@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recent Chats</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+
+<body class="page-center">
+
+<div class="container chat-page">
+
+    <!-- HEADER -->
+    <div class="chat-top">
+        <button onclick="location.href='dashboard.html'">⬅ Back</button>
+        <h2>Recent Chats</h2>
+    </div>
+
+    <!-- CHAT LIST -->
+    <div class="chat-list-new" id="chatListContainer">
+        <!-- Dynamically loaded -->
+    </div>
+
+    <!-- BOTTOM INPUT -->
+    <div class="chat-bottom">
+        <input type="text" id="chatUserId" placeholder="Enter User ID">
+        <button onclick="startNewChat()">Start</button>
+    </div>
+
+</div>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+    window.addEventListener('load', () => {
+        loadChats();
+    });
+
+    function loadChats() {
+        const container = document.getElementById('chatListContainer');
+        let chats = JSON.parse(localStorage.getItem('recentChats')) || [];
+
+        if (chats.length === 0) {
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">No recent chats. Start a new one!</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        // Remove duplicates and show last 5
+        const uniqueChats = [...new Set(chats)];
+        uniqueChats.slice(-5).reverse().forEach(chat => {
+            container.innerHTML += `
+                <div class="chat-row" onclick="openChatUser('${chat}')">
+                    <div class="chat-avatar">${chat.charAt(0).toUpperCase()}</div>
+                    <div class="chat-info">
+                        <strong>${chat}</strong>
+                        <p>Click to continue chatting</p>
+                    </div>
+                    <span class="chat-time">recent</span>
+                </div>
+            `;
+        });
+    }
+
+    function startNewChat() {
+        const userId = document.getElementById('chatUserId').value;
+        if (!userId || userId.trim() === '') {
+            alert('Please enter a User ID');
+            return;
+        }
+        openChatUser(userId);
+    }
+
+    function openChatUser(userId) {
+        // Save to recent chats
+        let chats = JSON.parse(localStorage.getItem('recentChats')) || [];
+        chats.push(userId);
+        localStorage.setItem('recentChats', JSON.stringify(chats));
+
+        // Store current chat user and redirect
+        sessionStorage.setItem('chatUserId', userId);
+        window.location.href = 'chatroom.html';
+    }
+</script>
+
+</body>
+</html>

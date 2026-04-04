@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recent Calls</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/history.css">
+</head>
+
+<body class="page-center">
+
+<div class="container history-page">
+
+    <!-- HEADER -->
+    <div class="history-top">
+        <button onclick="location.href='dashboard.html'">⬅ Back</button>
+        <h2>Recent Calls</h2>
+    </div>
+
+    <!-- CALL LIST -->
+    <div class="call-list" id="callListContainer">
+        <!-- Dynamically loaded -->
+    </div>
+
+</div>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+    window.addEventListener('load', () => {
+        loadCallHistory();
+    });
+
+    function loadCallHistory() {
+        const container = document.getElementById('callListContainer');
+        let history = JSON.parse(localStorage.getItem('callHistory')) || [];
+
+        if (history.length === 0) {
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">No call history yet</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        // Show last 10 calls
+        history.slice(-10).reverse().forEach((call, index) => {
+            const avatar = call.receiver.charAt(0).toUpperCase();
+            container.innerHTML += `
+                <div class="call-row" onclick="toggleOptions(this)">
+                    <div class="call-avatar">${avatar}</div>
+
+                    <div class="call-info">
+                        <strong>${call.receiver}</strong>
+                        <p>${call.langFrom} → ${call.langTo}</p>
+                    </div>
+
+                    <span class="call-duration">${call.duration}</span>
+
+                    <!-- DROPDOWN -->
+                    <div class="call-options">
+                        <div onclick="callUser('${call.receiver}')">📞 Call</div>
+                        <div onclick="chatUser('${call.receiver}')">💬 Chat</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function toggleOptions(element) {
+        const options = element.querySelector('.call-options');
+        // Close other open options
+        document.querySelectorAll('.call-options').forEach(opt => {
+            if (opt !== options) opt.style.display = 'none';
+        });
+        // Toggle current option
+        options.style.display = options.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function callUser(userId) {
+
+    sessionStorage.setItem("receiverId", userId);
+    sessionStorage.setItem("receiverLanguage", "English");
+
+    window.location.href = "call.html";
+
+  }
+
+    function chatUser(userId) {
+        sessionStorage.setItem('chatUserId', userId);
+        window.location.href = 'chatroom.html';
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Voice-Lingo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e2972, #2a3c9800);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e2972, #2a3c98);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .header h1 { font-size: 24px; }
+
+        .profile-wrapper { position: relative; }
+
+        .profile-icon {
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            user-select: none;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            color: black;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            min-width: 250px;
+            z-index: 1000;
+        }
+
+        .profile-dropdown p { margin: 10px 0; font-size: 14px; }
+
+        .profile-dropdown label {
+            display: block;
+            margin: 10px 0 5px 0;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .profile-dropdown select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover { background: #c0392b; }
+
+        .container {
+            max-width: 500px;
+            width: 95%;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .container h2 {
+            color: #2a5298;
+            border-bottom: 2px solid #2a5298;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2a5298;
+            background-color: #f9f9f9;
+        }
+
+        .call-btn {
+            width: 100%;
+            background: green;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .call-btn:hover { background: darkgreen; }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.success {
+            display: block;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            display: block;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            display: block;
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .bottom-nav {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .bottom-nav button {
+            background: #2a5298;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .bottom-nav button:hover { background: #1e3c72; }
+
+        .accept-btn { background: #28a745; color: white; }
+        .accept-btn:hover { background: #218838; }
+        .reject-btn { background: #dc3545; color: white; }
+        .reject-btn:hover { background: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎤 VOICE LINGO</h1>
+        <div class="profile-wrapper">
+            <div class="profile-icon" onclick="toggleProfileMenu()">👤</div>
+            <div class="profile-dropdown" id="profileMenu" style="display: none;">
+                <p><strong>Name:</strong> <span id="profileName">User</span></p>
+                <p><strong>ID:</strong> <span id="profileId">Loading...</span></p>
+                <label for="languageSelect">Preferred Language</label>
+                <select id="languageSelect" onchange="changeLanguage()">
+                    <option>English</option>
+                    <option>Hindi</option>
+                    <option>Telugu</option>
+                    <option>Tamil</option>
+                </select>
+                <button class="logout-btn" onclick="logoutUser()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="messageDiv" class="message"></div>
+
+        <h2>Initiate Call</h2>
+
+        <div class="form-group">
+            <input type="text" id="targetUserId" placeholder="Enter Receiver ID">
+        </div>
+
+        <button class="call-btn" onclick="initiateCall()">Start Call</button>
+
+        <!-- INCOMING CALL ALERT -->
+        <div id="incomingCallAlert" style="display:none; background:#fff3cd; border:2px solid #ffc107; padding:15px; border-radius:6px; margin-top:20px;">
+            <h3 style="color:#f39c12; margin-bottom:10px;">📞 Incoming Call</h3>
+            <div id="incomingCallInfo" style="margin-bottom:15px;"></div>
+            <button class="accept-btn" onclick="acceptIncomingCall()" style="width:100%; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-bottom:10px;">Accept Call</button>
+            <button class="reject-btn" onclick="rejectIncomingCall()" style="width:100%; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Reject Call</button>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='chat.html'">💬 Chat</button>
+            <button onclick="location.href='history.html'">📞 History</button>
+        </div>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/signaling.js"></script>
+    <script src="js/webrtc.js"></script>
+    <script src="js/translation.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        let app = null;
+        let incomingCallData = null;
+
+        async function initializeDashboard() {
+            const user = authManager.getCurrentUser();
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('profileName').textContent = user.name;
+            document.getElementById('profileId').textContent = user.user_id;
+            document.getElementById('languageSelect').value = user.language;
+
+            app = await startVoiceLingo(user);
+
+            app.onIncomingCall = (callData) => {
+                incomingCallData = callData;
+                handleIncomingCall(callData);
+            };
+
+            app.onCallRejected = () => {
+                showMessage('Call rejected', 'error');
+            };
+
+            app.onCallFailed = (data) => {
+                showMessage('Call failed: ' + data.reason, 'error');
+            };
+
+            app.onCallEnded = () => {
+                showMessage('Call ended', 'info');
+            };
+        }
+
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profileMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function changeLanguage() {
+            const language = document.getElementById("languageSelect").value;
+            const user = authManager.getCurrentUser();
+            try {
+                const response = await fetch(`${CONFIG.SERVER_URL}/update-language`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: user.user_id, language: language })
+                });
+                if (response.ok) {
+                    user.language = language;
+                    authManager.saveUserToStorage();
+                    showMessage("Language updated!", "success");
+                }
+            } catch (error) {
+                showMessage("Server error: " + error.message, "error");
+            }
+        }
+
+        async function initiateCall() {
+            const targetUserId = document.getElementById("targetUserId").value.trim();
+            const user = authManager.getCurrentUser();
+            const myLanguage = user.language || "English";
+
+            if (!targetUserId) {
+                showMessage("Please enter receiver ID", "error");
+                return;
+            }
+
+            sessionStorage.setItem("receiverId", targetUserId);
+            sessionStorage.setItem("receiverLanguage", myLanguage);
+            sessionStorage.setItem("isCaller", "true"); // ✅ mark as caller
+
+            try {
+                await app.callUser(targetUserId, myLanguage);
+                showMessage("Calling " + targetUserId + "...", "info");
+            } catch (error) {
+                showMessage("Call failed: " + error.message, "error");
+            }
+        }
+
+        function handleIncomingCall(callData) {
+            document.getElementById('incomingCallInfo').innerHTML = `
+                <strong>${callData.caller_name}</strong> is calling you...<br>
+                <small>Language: ${callData.caller_language}</small>
+            `;
+            document.getElementById('incomingCallAlert').style.display = 'block';
+        }
+
+        async function acceptIncomingCall() {
+            try {
+                if (!incomingCallData) {
+                    showMessage("No incoming call data", "error");
+                    return;
+                }
+
+                sessionStorage.setItem("receiverId", incomingCallData.caller_id);
+                sessionStorage.setItem("receiverLanguage", incomingCallData.caller_language || "English");
+                sessionStorage.setItem("isCaller", "false"); // ✅ mark as receiver
+
+                await app.acceptCall();
+
+                document.getElementById("incomingCallAlert").style.display = "none";
+
+                window.location.href = "call.html";
+
+            } catch (error) {
+                showMessage("Error accepting call: " + error.message, "error");
+            }
+        }
+
+        function rejectIncomingCall() {
+            app.rejectCall('User declined');
+            incomingCallData = null;
+            document.getElementById('incomingCallAlert').style.display = 'none';
+            showMessage('Call rejected', 'info');
+        }
+
+        function showMessage(msg, type) {
+            const msgDiv = document.getElementById('messageDiv');
+            msgDiv.textContent = msg;
+            msgDiv.className = 'message ' + type;
+            setTimeout(() => { msgDiv.className = 'message'; }, 5000);
+        }
+
+        function logoutUser() {
+            if (app) app.disconnect();
+            authManager.logout();
+            window.location.href = 'index.html';
+        }
+
+        window.addEventListener('load', initializeDashboard);
+    </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+/* CALL PAGE STYLES */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    height: 100vh;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.call-container {
+    width: 400px;
+    background: #2f4b8f;
+    padding: 30px;
+    border-radius: 25px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.profile-circle {
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 60px;
+    margin: 0 auto 20px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.call-container h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.timer {
+    margin-top: 10px;
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+.button-group {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.control-btn {
+    flex: 1;
+    width: 100px;
+    height: 100px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: 0.3s;
+}
+
+.control-btn span {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.control-btn.mic {
+    background: #4c6ef5;
+}
+
+.control-btn.speaker {
+    background: #3b82f6;
+}
+
+.control-btn.end {
+    background: #dc3545;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.calling-from {
+    margin-top: 30px;
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 15px;
+}
+
+.calling-from p {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 5px;
+}
+
+.calling-from h3 {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.calling-from small {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+@media (max-width: 500px) {
+    .call-container {
+        width: 95%;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .control-btn {
+        padding: 15px;
+    }
+}

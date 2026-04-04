@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Lingo - Calling</title>
+<link rel="stylesheet" href="css/call.css">
+<style>
+    .translation-box {
+        margin: 15px auto;
+        max-width: 90%;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 12px;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .translation-box h4 {
+        color: #aad4f5;
+        font-size: 12px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .translation-msg {
+        background: rgba(255,255,255,0.15);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        color: white;
+        font-size: 14px;
+        border-left: 3px solid #4c6ef5;
+    }
+    .translation-msg .lang-tag {
+        font-size: 10px;
+        color: #aad4f5;
+        margin-bottom: 3px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="call-container">
+
+<audio id="remoteAudio" autoplay></audio>
+
+<div class="profile-circle" id="calleeInitial">B</div>
+
+<h2 id="calleeName">Connecting...</h2>
+<div class="timer" id="callTimer">00:00</div>
+
+<div class="button-group">
+    <button class="control-btn mic" id="micBtn" onclick="toggleMic()">
+        🎤<span>Mic On</span>
+    </button>
+    <button class="control-btn speaker" id="speakerBtn" onclick="toggleSpeaker()">
+        🔊<span>Speaker</span>
+    </button>
+    <button class="control-btn end" onclick="endCall()">
+        ❌<span>End</span>
+    </button>
+</div>
+
+<div class="translation-box" id="translationBox" style="display:none;">
+    <h4>🌐 Live Translation</h4>
+    <div id="translationMessages"></div>
+</div>
+
+<div class="calling-from">
+    <p>Calling from</p>
+    <h3 id="callerId">Your ID</h3>
+    <small id="callerIdSmall">@yourId</small>
+</div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/signaling.js"></script>
+<script src="js/webrtc.js"></script>
+<script src="js/translation.js"></script>
+
+<script>
+
+let signaling;
+let webrtc;
+let translation;
+let timerStarted = false;
+let callStartTime = null;
+let micEnabled = true;
+let speakerEnabled = true;
+let isSpeaking = false; // ✅ track TTS state separately
+
+window.addEventListener("load", async () => {
+
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    const receiverId = sessionStorage.getItem("receiverId");
+    const isCaller = sessionStorage.getItem("isCaller") === "true";
+
+    if (!currentUser || !receiverId) {
+        alert("Call information missing");
+        window.location.href = "dashboard.html";
+        return;
+    }
+
+    const myId = currentUser.user_id;
+    const myLanguage = currentUser.language || "English";
+
+    document.getElementById("callerId").textContent = myId;
+    document.getElementById("callerIdSmall").textContent = "@" + myId;
+    document.getElementById("calleeName").textContent = receiverId;
+    document.getElementById("calleeInitial").textContent = receiverId.charAt(0).toUpperCase();
+
+    /* SIGNALING */
+    signaling = new SignalingManager(myId);
+    await signaling.connect();
+
+    signaling.ws.send(JSON.stringify({
+        type: "restore_call",
+        connected_to: receiverId
+    }));
+
+    /* WEBRTC */
+    webrtc = new WebRTCManager(signaling);
+    await webrtc.getLocalStream();
+    webrtc.createPeerConnection();
+
+    webrtc.onRemoteStreamReady = (stream) => {
+        document.getElementById("remoteAudio").srcObject = stream;
+    };
+
+    /* TRANSLATION */
+    translation = new TranslationManager(myId, isCaller);
+
+    translation.onTranslationReceived = (data) => {
+        showTranslation(data.text, data.target_language);
+        speakTranslation(data.text, data.target_language);
+    };
+
+    // ✅ FIX: both caller and receiver send ONLY their own language
+    // backend figures out translation direction
+    await translation.connect(myLanguage, myLanguage);
+    translation.startAudioCapture(webrtc.localStream);
+
+    if (isCaller) {
+        startTimer();
+        await webrtc.createAndSendOffer();
+    } else {
+        startTimer();
+    }
+
+    signaling.on("offer", async (data) => {
+        await webrtc.handleOffer(data.offer);
+    });
+
+    signaling.on("answer", async (data) => {
+        await webrtc.handleAnswer(data.answer);
+    });
+
+    signaling.on("ice_candidate", async (data) => {
+        await webrtc.addIceCandidate(data.candidate);
+    });
+
+    signaling.on("call_ended", () => {
+        cleanup();
+        window.location.href = "dashboard.html";
+    });
+
+    signaling.on("call_closed", () => {
+        cleanup();
+        window.location.href = "dashboard.html";
+    });
+
+});
+
+function showTranslation(text, lang) {
+    const box = document.getElementById("translationBox");
+    const msgs = document.getElementById("translationMessages");
+    box.style.display = "block";
+
+    const div = document.createElement("div");
+    div.className = "translation-msg";
+    div.innerHTML = `<div class="lang-tag">→ ${lang}</div><div>${text}</div>`;
+    msgs.insertBefore(div, msgs.firstChild);
+
+    while (msgs.children.length > 5) {
+        msgs.removeChild(msgs.lastChild);
+    }
+}
+
+function speakTranslation(text, lang) {
+    if (!window.speechSynthesis) return;
+
+    const langMap = {
+        "English": "en-US",
+        "Hindi": "hi-IN",
+        "Telugu": "te-IN",
+        "Tamil": "ta-IN",
+        "Spanish": "es-ES",
+        "French": "fr-FR",
+        "German": "de-DE",
+        "Japanese": "ja-JP",
+        "Chinese": "zh-CN",
+        "Arabic": "ar-SA",
+        "Portuguese": "pt-BR",
+        "Russian": "ru-RU",
+        "Korean": "ko-KR"
+    };
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langMap[lang] || "en-US";
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => {
+        isSpeaking = true;
+        // ✅ pause speech recognition while TTS speaks
+        if (translation && translation.recognition) {
+            translation.recognition.stop();
+        }
+    };
+
+    utterance.onend = () => {
+        isSpeaking = false;
+        // ✅ restart speech recognition after TTS finishes
+        setTimeout(() => {
+            if (translation && translation.isActive && !isSpeaking) {
+                try {
+                    translation.recognition.start();
+                } catch(e) {}
+            }
+        }, 500);
+    };
+
+    // ✅ fallback timeout in case onend doesn't fire
+    setTimeout(() => {
+        if (isSpeaking) {
+            isSpeaking = false;
+            if (translation && translation.isActive) {
+                try { translation.recognition.start(); } catch(e) {}
+            }
+        }
+    }, text.length * 100 + 2000);
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+}
+
+function startTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+    callStartTime = Date.now();
+    setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60).toString().padStart(2, "0");
+        const secs = (elapsed % 60).toString().padStart(2, "0");
+        document.getElementById("callTimer").textContent = `${mins}:${secs}`;
+    }, 1000);
+}
+
+function toggleMic() {
+    micEnabled = !micEnabled;
+    const btn = document.getElementById("micBtn");
+    btn.style.background = micEnabled ? "#4c6ef5" : "#888";
+    btn.querySelector("span").textContent = micEnabled ? "Mic On" : "Mic Off";
+    if (webrtc && webrtc.localStream) {
+        webrtc.localStream.getAudioTracks()[0].enabled = micEnabled;
+    }
+    // ✅ also pause/resume speech recognition
+    if (translation && translation.recognition) {
+        if (micEnabled) {
+            try { translation.recognition.start(); } catch(e) {}
+        } else {
+            translation.recognition.stop();
+        }
+    }
+}
+
+function toggleSpeaker() {
+    speakerEnabled = !speakerEnabled;
+    const btn = document.getElementById("speakerBtn");
+    btn.style.background = speakerEnabled ? "#3b82f6" : "#888";
+    btn.querySelector("span").textContent = speakerEnabled ? "Speaker" : "Muted";
+    document.getElementById("remoteAudio").muted = !speakerEnabled;
+}
+
+function endCall() {
+    window.speechSynthesis.cancel();
+    if (signaling) {
+        signaling.ws.send(JSON.stringify({ type: "end_call" }));
+    }
+    setTimeout(() => {
+        cleanup();
+        window.location.href = "dashboard.html";
+    }, 300);
+}
+
+function cleanup() {
+    if (translation) translation.disconnect();
+    if (webrtc) webrtc.cleanup();
+    sessionStorage.removeItem("receiverId");
+    sessionStorage.removeItem("receiverLanguage");
+    sessionStorage.removeItem("isCaller");
+}
+
+</script>
+
+</body>
+</html>

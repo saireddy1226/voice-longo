@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Voice Lingo</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#1e2972,#2a3c98);
+}
+
+.container{
+width:380px;
+background:white;
+padding:35px;
+border-radius:12px;
+box-shadow:0 10px 30px rgba(0,0,0,0.25);
+text-align:center;
+}
+
+h2{
+color:#2a5298;
+margin-bottom:25px;
+}
+
+.form-group{
+text-align:left;
+margin-bottom:18px;
+}
+
+label{
+font-size:14px;
+color:#333;
+font-weight:600;
+display:block;
+margin-bottom:6px;
+}
+
+input{
+width:100%;
+padding:11px;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:14px;
+transition:0.2s;
+}
+
+input:focus{
+outline:none;
+border-color:#2a5298;
+background:#f9f9f9;
+}
+
+.btn-primary{
+width:100%;
+padding:11px;
+border:none;
+border-radius:6px;
+background:#2a5298;
+color:white;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
+margin-top:10px;
+transition:0.2s;
+}
+
+.btn-primary:hover{
+background:#1e3c72;
+}
+
+.toggle-form{
+margin-top:15px;
+font-size:14px;
+color:#555;
+}
+
+.toggle-form a{
+color:#2a5298;
+font-weight:bold;
+text-decoration:none;
+}
+
+.toggle-form a:hover{
+text-decoration:underline;
+}
+
+.message{
+display:none;
+padding:12px;
+border-radius:6px;
+margin-bottom:15px;
+font-size:14px;
+}
+
+.message.error{
+display:block;
+background:#f8d7da;
+color:#721c24;
+border:1px solid #f5c6cb;
+}
+
+.message.success{
+display:block;
+background:#d4edda;
+color:#155724;
+border:1px solid #c3e6cb;
+}
+
+.loading{
+display:none;
+margin-bottom:10px;
+color:#2a5298;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Login</h2>
+
+<div id="messageDiv" class="message"></div>
+<div id="loadingDiv" class="loading">Processing...</div>
+
+<div class="form-group">
+<label>User ID</label>
+<input type="text" id="loginUserId" placeholder="Enter your User ID">
+</div>
+
+<div class="form-group">
+<label>Password</label>
+<input type="password" id="loginPassword" placeholder="Enter your password">
+</div>
+
+<button class="btn-primary" onclick="loginUser()">Login</button>
+
+<div class="toggle-form">
+Don't have account? <a href="register.html">Register here</a>
+</div>
+
+</div>
+
+<!-- ✅ config.js MUST be before the script that uses CONFIG -->
+<script src="js/config.js"></script>
+
+<script>
+
+async function loginUser(){
+
+    const userId = document.getElementById("loginUserId").value;
+    const password = document.getElementById("loginPassword").value;
+
+    if(!userId || !password){
+        showMessage("Enter User ID and Password", "error");
+        return;
+    }
+
+    showLoading(true);
+
+    try{
+        // ✅ FIXED: use CONFIG.SERVER_URL instead of localhost
+        const response = await fetch(`${CONFIG.SERVER_URL}/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+        showLoading(false);
+
+        if(response.ok){
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            window.location.href = "dashboard.html";
+        } else {
+            showMessage("Invalid credentials", "error");
+        }
+
+    } catch(error){
+        showLoading(false);
+        showMessage("Server error: " + error.message, "error");
+    }
+}
+
+function showMessage(msg, type){
+    const msgDiv = document.getElementById("messageDiv");
+    msgDiv.textContent = msg;
+    msgDiv.className = "message " + type;
+}
+
+function showLoading(show){
+    document.getElementById("loadingDiv").style.display = show ? "block" : "none";
+}
+
+document.addEventListener("keypress", function(e){
+    if(e.key === "Enter"){
+        loginUser();
+    }
+});
+
+</script>
+
+</body>
+</html>
